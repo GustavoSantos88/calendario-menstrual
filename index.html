@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Calendário Menstrual</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
@@ -21,20 +22,16 @@
     <h1 class="text-3xl font-bold text-center mb-6">Calendário Menstrual</h1>
     <div id="calendar"></div>
   </div>
-  <script>
 
+  <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // Função que gera chave para localStorage por mês/ano do calendário
       function getStorageKey(year, month) {
-        // mês no formato 01,02...12 para melhor ordenação e clareza
         const mm = (month + 1).toString().padStart(2, '0');
         return `ciclo_${year}_${mm}`;
       }
 
       let mesAtual = new Date().getMonth();
       let anoAtual = new Date().getFullYear();
-
-      // Armazena o ciclo do mês/ano atual do calendário
       let cicloAtual = { inicio: null, fim: null };
 
       const calendarEl = document.getElementById('calendar');
@@ -43,14 +40,13 @@
         locale: 'pt-br',
         initialView: 'dayGridMonth',
         height: 'auto',
-        selectable: true,
         headerToolbar: {
           left: 'prev,next today',
           center: 'title',
           right: ''
         },
+        selectable: false,
 
-        // Ao mudar mês, carregar ciclo do mês exibido
         datesSet(info) {
           mesAtual = info.start.getMonth();
           anoAtual = info.start.getFullYear();
@@ -58,13 +54,12 @@
           atualizarEventos();
         },
 
-        select(info) {
-          const dataSelecionada = info.startStr;
+        dateClick(info) {
+          const dataSelecionada = info.dateStr;
           const dataSelecionadaDate = new Date(dataSelecionada);
           const inicioDate = cicloAtual.inicio ? new Date(cicloAtual.inicio) : null;
           const fimDate = cicloAtual.fim ? new Date(cicloAtual.fim) : null;
 
-          // Se não tem início → marca início
           if (!cicloAtual.inicio) {
             cicloAtual.inicio = dataSelecionada;
             salvarCiclo();
@@ -72,7 +67,6 @@
             return;
           }
 
-          // Se clicou no dia do início → remove ciclo todo
           if (cicloAtual.inicio === dataSelecionada) {
             removerCiclo();
             cicloAtual = { inicio: null, fim: null };
@@ -80,7 +74,6 @@
             return;
           }
 
-          // Se não tem fim → tenta marcar fim
           if (!cicloAtual.fim) {
             if (dataSelecionadaDate < inicioDate) {
               alert('O fim não pode ser antes do início');
@@ -92,7 +85,6 @@
             return;
           }
 
-          // Se clicou no dia do fim → remove só o fim
           if (cicloAtual.fim === dataSelecionada) {
             cicloAtual.fim = null;
             salvarCiclo();
@@ -100,8 +92,6 @@
             return;
           }
 
-          // Regras para remarcar fim:
-          // Se início e fim estão no mesmo mês, não permite remarcar fim para mês diferente
           if (dataSelecionadaDate > inicioDate) {
             if (fimDate) {
               const inicioMes = inicioDate.getMonth();
@@ -118,13 +108,13 @@
                 }
               }
             }
+
             cicloAtual.fim = dataSelecionada;
             salvarCiclo();
             atualizarEventos();
             return;
           }
 
-          // Se data selecionada antes do início → remarca início
           if (dataSelecionadaDate < inicioDate) {
             cicloAtual.inicio = dataSelecionada;
             if (fimDate && fimDate < dataSelecionadaDate) {
@@ -135,17 +125,14 @@
             return;
           }
         },
+
         events: []
       });
 
       function carregarCiclo() {
         const key = getStorageKey(anoAtual, mesAtual);
         const data = JSON.parse(localStorage.getItem(key));
-        if (data) {
-          cicloAtual = data;
-        } else {
-          cicloAtual = { inicio: null, fim: null };
-        }
+        cicloAtual = data || { inicio: null, fim: null };
       }
 
       function salvarCiclo() {
@@ -199,11 +186,9 @@
         calendar.render();
       }
 
-      // Inicializa calendário e carrega ciclo do mês atual
       calendar.render();
       carregarCiclo();
       atualizarEventos();
-
     });
   </script>
 </body>
